@@ -7,13 +7,15 @@ DB_URL = "sqlite:///movies.db"
 engine = create_engine(DB_URL, echo=False)
 
 # Create the movies table if it does not exist
+# Prevent crashes if the API does not have a poster for a specific movie
 with engine.connect() as connection:
     connection.execute(text("""
         CREATE TABLE IF NOT EXISTS movies (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             title TEXT UNIQUE NOT NULL,
             year INTEGER NOT NULL,
-            rating REAL NOT NULL
+            rating REAL NOT NULL,
+            poster TEXT
         )
     """))
     connection.commit()
@@ -26,7 +28,7 @@ def get_movies():
 
     """
     with engine.connect() as connection:
-        query = text('SELECT title, year, rating FROM movies')
+        query = text('SELECT title, year, rating, poster FROM movies')
         result = connection.execute(query)
         all_rows = result.fetchall()
 
@@ -39,23 +41,25 @@ def get_movies():
 
             all_movies_dict[row.title] = {
                 "year": row.year,
-                "rating": row.rating
+                "rating": row.rating,
+                "poster": row.poster
             }
         return all_movies_dict
 
-def add_movie(title: str, year: int, rating: float):
+def add_movie(title: str, year: int, rating: float, poster: str):
 
     """ Add a movie to the database. """
 
     with engine.connect() as connection:
 
         # Define the query avoiding SQL injection
-        query = text('INSERT INTO movies (title, year, rating) VALUES (:title, :year, :rating)')
+        query = text('INSERT INTO movies (title, year, rating, poster) VALUES (:title, :year, :rating, :poster)')
 
         connection.execute(query, {
             "title": title,
             "year": year,
-            "rating": rating
+            "rating": rating,
+            "poster": poster
         })
         connection.commit() # Save the changes
 
