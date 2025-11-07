@@ -59,3 +59,30 @@ def add_movie(title: str, year: int, rating: float):
         })
         connection.commit() # Save the changes
 
+def delete_movie(title: str):
+
+    """ Delete a movie from the database. """
+
+    with engine.connect() as connection:
+
+        # Define the query avoiding SQL injection
+        query = text('DELETE FROM movies WHERE title = :title')
+
+        connection.execute(query, {
+            "title": title
+        })
+        connection.commit() # Save the changes
+
+def update_movie(title: str, rating: float):
+    """
+
+    Update the rating for an existing movie in the database.
+
+    """
+    with engine.connect() as connection:
+        query = text('UPDATE movies SET rating = :rating WHERE title = :title')
+        connection.execute(query, {
+            "rating": rating,
+            "title": title
+        })
+        connection.commit()
