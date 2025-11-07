@@ -1,6 +1,6 @@
 from statistics import median
 import random
-import movie_storage
+import movie_storage_sql as movie_storage
 from datetime import datetime
 
 # ******** Defining the "Menu" function ***********
