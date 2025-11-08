@@ -1,12 +1,54 @@
+import json
 from statistics import median
 import random
 import movie_storage_sql as movie_storage
-from datetime import datetime
+import requests
+
+# Constants for API
+API_KEY = "3aea435f"
+API_URL = "http://omdbapi.com/"
+
+# Helper function for API calls
+def fetch_movie_data(title):
+    """
+
+    Fetches data for a movie from OMDb.
+    Returns the movie data as a dictionary if found, otherwise None.
+
+    """
+
+    try:
+
+        params = {
+            "t": title,
+            "apikey": API_KEY
+        }
+        response = requests.get(API_URL, params=params)
+        response.raise_for_status() # Raise an error in case of 404, 500
+
+        data = response.json()
+
+        #Check if API found the movie
+        if data.get('Response') == 'True':
+            return data
+        else:
+            print("No movie data found in our movie provider")
+            return None
+
+    except requests.exceptions.RequestException as e:
+        # Handle network errors
+        print(f"Connection error: {e}")
+        return None
+    except json.JSONDecodeError:
+        print(f"Could not decode API response")
+        return None
+
 
 # ******** Defining the "Menu" function ***********
 def movie_menu():
     print("\n********** My Movies Database **********")
-    print("\n0. Exit")
+    print("**********     🍿🎥📺🎞️🎬    **********")
+    print("\n0. Exit ➜]")
     print("1. List movies")
     print("2. Add movie")
     print("3. Delete movie")
@@ -16,10 +58,10 @@ def movie_menu():
     print("7. Search movie")
     print("8. Movie sorted by rating")
 
-    user_menu_choice = input("\nEnter choice (0-8): ")
+    user_menu_choice = input("\n▶ Enter choice (0-8): ")
     while user_menu_choice not in [str(i) for i in range(0, 9)]:
         print("Invalid choice")
-        user_menu_choice = input("Enter choice (0-8): ")
+        user_menu_choice = input("▶ Enter choice (0-8): ")
     return user_menu_choice
 
 
@@ -35,43 +77,49 @@ def list_movies_rates():
 
 # ****** Defining the "Add movie" function ********
 def add_movie():
+
     movies = movie_storage.get_movies()
-    user_movie = input("\nEnter movie name: ")
-    if user_movie in movies:
-        print("\nAlready there")
+
+    user_movie = input("\n▶ Enter movie name: ")
+
+    # Check if movie is already in our 'local' database
+    if user_movie.lower() in (title.lower() for title in movies.keys()):
+        print("\nThat movie already exists in the database.!")
         return
 
-    # Rating validation
-    while True:
-        try:
-            user_rating = float(input("Enter movie rating (1-10): "))
-            if 1 <= user_rating <= 10:
-                break
-            else:
-                print("Rating must be between 1 and 10.")
-        except ValueError:
-            print("Please enter a valid number.")
+    # Getting data from API using the helper function
+    print(f"Searching for {user_movie}...")
+    movie_data = fetch_movie_data(user_movie)
 
-    # Year validation using 1888 as the cutoff date
-    current_year = datetime.now().year
-    while True:
-        try:
-            user_year = int(input("Enter movie year: "))
-            if 1888 <= user_year <= current_year:
-                break
-            else:
-                print(f"Year must be between 1888 and {current_year}.")
-        except ValueError:
-            print("Please enter a valid year (e.g. 1994).")
+    # If the API fails, return None.
+    if movie_data is None:
+        print("No movie data found")
+        return
 
-    movie_storage.add_movie(user_movie, user_year, user_rating)
-    print(f"\nThe movie '{user_movie}' with rating {user_rating} and year {user_year} has been added")
+    # Getting the data from the API Response and
+    # convert them to the expected type.
+    try:
+        year = int(movie_data.get('Year', 0))
+
+        rating = float(movie_data.get('imdbRating', 0.0))
+
+        poster = movie_data.get('Poster', "")
+
+        if poster == 'N/A':
+            poster = None # Store as NULL in database
+
+    except ValueError:
+        print("The data from the movie is not in the expected format.")
+        return
+
+    movie_storage.add_movie(movie_data["Title"], year, rating, poster)
+    print(f"\nThe Movie '{movie_data['Title']}' (Year: {year}, Rating: {rating} has been added.")
 
 
 # ****** Defining the "Delete movie" function ********
 def delete_movie():
     movies = movie_storage.get_movies()
-    user_movie = input("\nEnter movie name: ")
+    user_movie = input("\n▶ Enter movie name: ")
     if user_movie not in movies:
         print("\nMovie not found")
     else:
@@ -82,7 +130,7 @@ def delete_movie():
 # ****** Defining the "Update movie" function ********
 def update_movie():
     movies = movie_storage.get_movies()
-    user_movie = input("\nEnter movie name: ")
+    user_movie = input("\n▶ Enter movie name: ")
     if user_movie not in movies:
         print("Movie not found")
         return
@@ -90,7 +138,7 @@ def update_movie():
     # Rating validation
     while True:
         try:
-            user_rate = float(input("Enter the new movie rate (1-10): "))
+            user_rate = float(input("▶ Enter the new movie rate (1-10): "))
             if 1 <= user_rate <= 10:
                 break
             else:
@@ -169,7 +217,7 @@ def search_movie():
         print("No movies in database.")
         return
 
-    user_movie_input = input("\nEnter part of the movie name: ").lower().strip()
+    user_movie_input = input("\n▶ Enter part of the movie name: ").lower().strip()
     if not user_movie_input:
         print("Please enter something to search.")
         return
