@@ -57,11 +57,12 @@ def movie_menu():
     print("6. Random movie")
     print("7. Search movie")
     print("8. Movie sorted by rating")
+    print("9. Generate website")
 
-    user_menu_choice = input("\n▶ Enter choice (0-8): ")
-    while user_menu_choice not in [str(i) for i in range(0, 9)]:
+    user_menu_choice = input("\n▶ Enter choice (1 - 9): ")
+    while user_menu_choice not in [str(i) for i in range(0, 10)]:
         print("Invalid choice")
-        user_menu_choice = input("▶ Enter choice (0-8): ")
+        user_menu_choice = input("▶ Enter choice (1 - 9): ")
     return user_menu_choice
 
 
@@ -246,6 +247,68 @@ def movies_sorted():
         print(f"{movie}: {props['rating']:.1f} ({props['year']})")
 
 
+#****** Defining the "generate website" function ********
+def generate_website():
+    """
+
+        Generates a static index.html file from the movie database
+        using index_template.html file and creating a final file
+        called index.html.
+
+    """
+
+    print(f"\nGenerating website...")
+
+    # Getting all the movies from the database
+
+    movies = movie_storage.get_movies()
+
+    if not movies:
+        print("No movies in database.")
+        return
+
+    # Reading the HTML template
+    try:
+        with open("index_template.html", "r", encoding="utf-8") as f:
+            template_content = f.read()
+    except FileNotFoundError:
+        print("File not found")
+        print("Please enter a valid file name or generate a new file in the same directory.")
+        return
+
+    # Generate the HTML for the movie grid
+
+    movie_grid_html = ""
+    for title, details in movies.items():
+        poster_url = details.get("poster")
+        if not poster_url or poster_url == "N/A":
+            poster_url = "https://via.placeholder.com/300x444?text=No+Poster"
+
+        # HTML Structure
+        movie_grid_html += '        <li>\n'  # <li> has no class
+        movie_grid_html += '            <div class="movie">\n'  # Wrapper div
+        movie_grid_html += f'                <img class="movie-poster" src="{poster_url}"/>\n'
+        movie_grid_html += f'                <div class="movie-title">{title}</div>\n'
+        movie_grid_html += f'                <div class="movie-year">{details.get("year", "N/A")}</div>\n'
+        movie_grid_html += '            </div>\n'  # Close wrapper div
+        movie_grid_html += '        </li>\n'
+        # --- End of new structure ---
+
+    # Replace the placeholders in the template
+
+    final_html = template_content.replace("__TEMPLATE_TITLE__", "Movie Party App")
+    final_html = final_html.replace("__TEMPLATE_MOVIE_GRID__", movie_grid_html)
+
+    # Writing the final HTML
+    try:
+        with open("index.html", "w", encoding="utf-8") as f:
+            f.write(final_html)
+        print("Website was generated successfully ✅")
+
+    except IOError as e:
+        print(f"An error occurred writing index.html: {e}")
+
+
 # ******** Main ********
 def main():
     while True:
@@ -266,6 +329,8 @@ def main():
             search_movie()
         elif user_menu_choice == "8":
             movies_sorted()
+        elif user_menu_choice == "9":
+            generate_website()
         elif user_menu_choice == "0":
             print("Bye 👋!")
             break
