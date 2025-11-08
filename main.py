@@ -4,6 +4,7 @@ import random
 import movie_storage_sql as movie_storage
 import requests
 
+
 # Constants for API
 API_KEY = "3aea435f"
 API_URL = "http://omdbapi.com/"
@@ -268,6 +269,7 @@ def generate_website():
         return
 
     # Reading the HTML template
+
     try:
         with open("index_template.html", "r", encoding="utf-8") as f:
             template_content = f.read()
