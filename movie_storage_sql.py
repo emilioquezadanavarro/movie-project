@@ -20,6 +20,16 @@ with engine.connect() as connection:
     """))
     connection.commit()
 
+def get_movie_by_title(title: str):
+    """
+    Retrieves a single movie's data by title.
+    Returns the row object if found, otherwise None.
+    """
+    with engine.connect() as connection:
+        query = text('SELECT title, year, rating, poster FROM movies WHERE title = :title')
+        result = connection.execute(query, {"title": title}).first()
+        return result
+
 def get_movies():
     """
 
@@ -72,10 +82,11 @@ def delete_movie(title: str):
         # Define the query avoiding SQL injection
         query = text('DELETE FROM movies WHERE title = :title')
 
-        connection.execute(query, {
+        result = connection.execute(query, {
             "title": title
         })
         connection.commit() # Save the changes
+        return result.rowcount
 
 def update_movie(title: str, rating: float):
     """
@@ -85,8 +96,9 @@ def update_movie(title: str, rating: float):
     """
     with engine.connect() as connection:
         query = text('UPDATE movies SET rating = :rating WHERE title = :title')
-        connection.execute(query, {
+        result = connection.execute(query, {
             "rating": rating,
             "title": title
         })
         connection.commit()
+        return result.rowcount
