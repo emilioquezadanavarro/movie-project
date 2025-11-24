@@ -81,12 +81,11 @@ def list_movies_rates():
 # ****** Defining the "Add movie" function ********
 def add_movie():
 
-    movies = movie_storage.get_movies()
-
     user_movie = input("\n▶ Enter movie name: ")
 
-    # Check if movie is already in our 'local' database
-    if user_movie.lower() in (title.lower() for title in movies.keys()):
+    existing_movie = movie_storage.get_movie_by_title(user_movie)
+
+    if existing_movie:
         print("\nThat movie already exists in the database.!")
         return
 
@@ -116,27 +115,26 @@ def add_movie():
         return
 
     movie_storage.add_movie(movie_data["Title"], year, rating, poster)
-    print(f"\nThe Movie '{movie_data['Title']}' (Year: {year}, Rating: {rating} has been added.")
+    print(f"\nThe Movie '{movie_data['Title']}' (Year: {year}, Rating: {rating}) has been added.")
 
 
 # ****** Defining the "Delete movie" function ********
 def delete_movie():
-    movies = movie_storage.get_movies()
     user_movie = input("\n▶ Enter movie name: ")
-    if user_movie not in movies:
-        print("\nMovie not found")
-    else:
-        movie_storage.delete_movie(user_movie)
+
+    rows_deleted = movie_storage.delete_movie(user_movie)
+
+    if rows_deleted > 0:
         print(f"The movie called '{user_movie}' has been deleted")
 
+    else:
+        print("\nMovie not found")
 
 # ****** Defining the "Update movie" function ********
 def update_movie():
-    movies = movie_storage.get_movies()
+
+    # Getting the title
     user_movie = input("\n▶ Enter movie name: ")
-    if user_movie not in movies:
-        print("Movie not found")
-        return
 
     # Rating validation
     while True:
@@ -149,8 +147,15 @@ def update_movie():
         except ValueError:
             print("Please enter a valid number.")
 
-    movie_storage.update_movie(user_movie, user_rate)
-    print(f"The movie called '{user_movie}' has been updated")
+    # Call the function and store rowcount
+    rows_updated = movie_storage.update_movie(user_movie, user_rate)
+
+    if rows_updated > 0:
+        print(f"The movie called '{user_movie}' has been updated")
+
+    else:
+        print("Movie not found")
+        return
 
 
 # ****** Defining the "average rating" function ********
@@ -272,7 +277,7 @@ def generate_website():
     # Reading the HTML template
 
     try:
-        with open("_static/index_template.html", "r", encoding="utf-8") as f:
+        with open("static/index_template.html", "r", encoding="utf-8") as f:
             template_content = f.read()
     except FileNotFoundError:
         print("File not found")
