@@ -3,9 +3,14 @@ from statistics import median
 import random
 import movie_storage_sql as movie_storage
 import requests
+import os
+from dotenv import load_dotenv
+
+# Load the environment variables from .env file
+load_dotenv()
 
 # Constants for API
-API_KEY = "" # TO DO IT LATER
+API_KEY = os.environ.get('OMDB_API_KEY')
 API_URL = "http://omdbapi.com/"
 
 # Helper function for API calls
