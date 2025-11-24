@@ -4,7 +4,7 @@ from sqlalchemy import create_engine, text, Select
 DB_URL = "sqlite:///data/movies.db"
 
 # Create the engine
-engine = create_engine(DB_URL, echo=False)
+engine = create_engine(DB_URL, echo=True)
 
 # Create the movies table if it does not exist
 # Prevent crashes if the API does not have a poster for a specific movie
